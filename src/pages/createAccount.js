@@ -3,85 +3,63 @@ import { useNavigate } from 'react-router-dom';
 import loginStyles from './loginStyles';
 
 export default function CreateAccount() {
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-  });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const { firstName, lastName, email, phone } = formData;
-    if (!firstName || !lastName || !email || !phone) {
-      setError('Please fill out all fields');
-      return;
+    setError('');
+    setSuccess('');
+
+    try {
+      const response = await fetch('http://localhost:3001/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }) // updated to use email
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccess('Account created successfully!');
+        setTimeout(() => navigate('/'), 1500); // Redirect to login page
+      } else {
+        setError(data.error || 'Registration failed');
+      }
+    } catch (err) {
+      setError('Server error');
     }
-    // Simulate account creation logic
-    console.log('Account created:', formData);
-    navigate('/dashboard');
   };
 
   return (
     <div style={loginStyles.container}>
       <div style={loginStyles.card}>
-        <h2 style={{ textAlign: 'center', marginBottom: '.5rem' }}>Create Account</h2>
+        <h2 style={{ textAlign: 'center' }}>Create Account</h2>
         {error && <div style={loginStyles.errorText}>{error}</div>}
+        {success && <div style={{ color: 'green', marginBottom: '1rem' }}>{success}</div>}
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="firstName" style={loginStyles.label}>First Name</label>
-            <input
-              id="firstName"
-              name="firstName"
-              type="text"
-              value={formData.firstName}
-              onChange={handleChange}
-              style={loginStyles.input}
-            />
-          </div>
-          <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="lastName" style={loginStyles.label}>Last Name</label>
-            <input
-              id="lastName"
-              name="lastName"
-              type="text"
-              value={formData.lastName}
-              onChange={handleChange}
-              style={loginStyles.input}
-            />
-          </div>
-          <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="email" style={loginStyles.label}>Email</label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              style={loginStyles.input}
-            />
-          </div>
-          <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="phone" style={loginStyles.label}>Phone Number</label>
-            <input
-              id="phone"
-              name="phone"
-              type="tel"
-              value={formData.phone}
-              onChange={handleChange}
-              style={loginStyles.input}
-            />
-          </div>
-          <button type="submit" style={loginStyles.button}>
-            Create Account
-          </button>
+          <label style={loginStyles.label}>Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            style={{ ...loginStyles.input, marginBottom: '1rem' }}
+          />
+          <label style={loginStyles.label}>Password</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            style={{ ...loginStyles.input, marginBottom: '1rem' }}
+          />
+          <button type="submit" style={loginStyles.button}>Create Account</button>
         </form>
+        <p style={loginStyles.linkText} onClick={() => navigate('/')}>Back to Login</p>
       </div>
     </div>
   );

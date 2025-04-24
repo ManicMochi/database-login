@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import loginStyles from './loginStyles'; 
+import loginStyles from './loginStyles';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -8,17 +8,37 @@ export default function Login() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!email || !password) {
       setError('Please enter both email and password');
       return;
     }
-    if (email === 'test@example.com' && password === '1234') {
-      setError('');
-      navigate('/dashboard');
-    } else {
-      setError('Invalid credentials');
+
+    try {
+      // Send a POST request to the backend login endpoint
+      const response = await fetch('http://localhost:3001/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: email, password })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem('authToken', data.token);
+        navigate('/dashboard');
+      } else {
+        if (data.error === 'User not found') {
+          setError('User does not exist');
+        } else {
+          setError(data.error || 'Login failed');
+        }
+      }      
+    } catch (err) {
+      setError('An error occurred while logging in');
+      console.error(err);
     }
   };
 
@@ -62,7 +82,7 @@ export default function Login() {
         </form>
         <p
           style={loginStyles.linkText}
-          onClick={() => navigate('/create-account')}
+          onClick={() => navigate('/CreateAccount')}
         >
           Create Account
         </p>
